@@ -1,0 +1,49 @@
+import numpy as np
+import matplotlib.pyplot as plt
+a, b = 0, 1
+c, d = 0, 1
+Ns = [4, 8, 16, 32]
+print('N\t Max. Error\t Error Ratio (N=4)\t Error Ratio (N=8)')
+tol = 1e-6
+maxiter = 10000
+exact = lambda x, y: (x - x**3) * (y - y**2)
+error_ratio_4_prev = '-'
+error_ratio_8_prev = '-'
+for N in Ns:
+    h = 1 / N
+    x = np.linspace(a, b, N+1)
+    y = np.linspace(c, d, N+1)
+    X, Y = np.meshgrid(x, y)
+    u = np.zeros((N+1, N+1))
+    u[:, 0] = 0
+    u[:, N] = 0
+    u[0, :] = 0
+    u[N, :] = 0
+    f = lambda x, y: 2 * x * (x**2 + 3 * y**2 - 3 * y - 1)
+    U = u.copy()
+    for k in range(maxiter):
+        for i in range(1, N):
+            for j in range(1, N):
+                U[i, j] = (h**2 * f(x[i], y[j]) + u[i-1, j] + u[i+1, j] + u[i, j-1] + u[i, j+1]) / 4
+        if np.max(np.abs(U - u)) < tol:
+            break
+        u = U.copy()
+    error = np.abs(U - exact(X, Y))
+    max_error = np.max(error)
+    if N == 4:
+        error_ratio_4 = '-'
+        error_ratio_8 = '-'
+    elif N == 8:
+        error_ratio_4 = max_error_prev / max_error
+        error_ratio_8 = '-'
+    else:
+        error_ratio_4 = max_error_prev / max_error
+        error_ratio_8 = error_ratio_4_prev / error_ratio_4
+    print(f'{N}\t{max_error}\t{error_ratio_4}\t{error_ratio_8}')
+    max_error_prev = max_error
+    error_ratio_4_prev = error_ratio_4
+    error_ratio_8_prev = error_ratio_8
+fig = plt.figure()
+ax1 = fig.add_subplot(121, projection='3d')
+ax1.plot_surface(X, Y, U)
+ax1.set_xlabel('x')
